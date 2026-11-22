@@ -77,6 +77,105 @@ export default {
       }
     }
 
+    // Linkvertise Anti-Bypass
+    if (
+      url.pathname === "/api/linkvertise/verify" &&
+      request.method === "POST"
+    ) {
+      if (!env.LINKVERTISE_TOKEN) {
+        return json({
+          ok: false,
+          error: "LINKVERTISE_TOKEN_NOT_CONFIGURED"
+        }, 503, request, env);
+      }
+
+      if (!/^[a-f0-9]{64}$/i.test(env.LINKVERTISE_TOKEN)) {
+        return json({
+          ok: false,
+          error: "INVALID_LINKVERTISE_TOKEN_CONFIGURATION"
+        }, 503, request, env);
+      }
+
+      try {
+        const body = await request.json();
+        const hash = body.hash;
+
+        if (
+          typeof hash !== "string" ||
+          !/^[a-f0-9]{64}$/i.test(hash)
+        ) {
+          return json({
+            ok: false,
+            error: "INVALID_LINKVERTISE_HASH"
+          }, 400, request, env);
+        }
+
+        const verifyUrl = new URL(
+          "https://publisher.linkvertise.com/api/v1/anti_bypassing"
+        );
+
+        verifyUrl.searchParams.set("token", env.LINKVERTISE_TOKEN);
+        verifyUrl.searchParams.set("hash", hash);
+
+        const response = await fetch(verifyUrl.toString(), {
+          method: "POST"
+        });
+
+        if (!response.ok) {
+          return json({
+            ok: false,
+            error: "LINKVERTISE_API_ERROR"
+          }, 502, request, env);
+        }
+
+        const result = (await response.text()).trim();
+
+        if (result !== "TRUE") {
+          return json({
+            ok: false,
+            error: "LINKVERTISE_VERIFICATION_FAILED"
+          }, 403, request, env);
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        const expiresAt = now + 900;
+        const sessionId = crypto.randomUUID();
+        const fingerprint = await hashKey(hash.toLowerCase());
+
+        await env.DB.prepare(`
+          INSERT INTO verification_sessions (
+            id,
+            provider,
+            status,
+            external_transaction_id,
+            created_at,
+            expires_at,
+            completed_at
+          )
+          VALUES (?, 'linkvertise', 'completed', ?, ?, ?, ?)
+        `).bind(
+          sessionId,
+          fingerprint,
+          now,
+          expiresAt,
+          now
+        ).run();
+
+        return json({
+          ok: true,
+          verified: true,
+          sessionId,
+          expiresAt
+        }, 200, request, env);
+
+      } catch {
+        return json({
+          ok: false,
+          error: "LINKVERTISE_VERIFICATION_ERROR"
+        }, 500, request, env);
+      }
+    }
+
     // Generate key - ADMIN ONLY
     if (url.pathname === "/api/generate" && request.method === "POST") {
       if (!env.ADMIN_SECRET) {
@@ -240,3 +339,4 @@ export default {
     }, 404, request, env);
   }
 };
+            
