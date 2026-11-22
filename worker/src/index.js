@@ -43,17 +43,28 @@ export default {
     }
 
     // API health check
-    if (
-      url.pathname === "/api/health" &&
-      request.method === "GET"
-    ) {
-      return json({
-        ok: true,
-        service: "rd4x-key-api",
-        database: "not_connected"
-      }, 200, request, env);
-    }
+if (
+  url.pathname === "/api/health" &&
+  request.method === "GET"
+) {
+  try {
+    await env.DB.prepare("SELECT 1 AS ok").first();
 
+    return json({
+      ok: true,
+      service: "rd4x-key-api",
+      database: "connected"
+    }, 200, request, env);
+
+  } catch (error) {
+    return json({
+      ok: false,
+      service: "rd4x-key-api",
+      database: "error",
+      message: error.message
+    }, 500, request, env);
+  }
+}
     // Key generation (not enabled yet)
     if (
       url.pathname === "/api/generate" &&
