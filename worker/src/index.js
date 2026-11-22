@@ -101,9 +101,9 @@ export default {
         const hash = body.hash;
 
         if (
-          typeof hash !== "string" ||
-          !/^[a-f0-9]{64}$/i.test(hash)
-        ) {
+  typeof hash !== "string" ||
+  hash.length !== 64
+) {
           return json({
             ok: false,
             error: "INVALID_LINKVERTISE_HASH"
