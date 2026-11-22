@@ -11,364 +11,294 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg: #0F0F12;
-  --surface: #18181D;
-  --surface2: #1F1F25;
-  --border: #302F36;
-  --text: #EBE9EC;
-  --muted: #918F97;
-  --accent: #7E2B3E;
-  --accent-dark: #5B1F2D;
-  --green: #5BA677;
+  --bg:#0F0F12;
+  --surface:#18181D;
+  --surface2:#1F1F25;
+  --border:#302F36;
+  --text:#EBE9EC;
+  --muted:#918F97;
+  --accent:#7E2B3E;
+  --accent-dark:#5B1F2D;
+  --green:#5BA677;
 }
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
 }
 
 body {
-  min-height: 100vh;
+  min-height:100vh;
   background:
-    radial-gradient(ellipse at 50% 0%, #7e2b3e22, transparent 55%),
+    radial-gradient(ellipse at 50% 0%,#7e2b3e22,transparent 55%),
     var(--bg);
-  color: var(--text);
-  font-family: Inter, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 25px 15px;
+  color:var(--text);
+  font-family:Inter,sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:25px 15px;
 }
 
 .container {
-  width: 100%;
-  max-width: 420px;
-  animation: appear .7s ease;
+  width:100%;
+  max-width:420px;
+  animation:appear .7s ease;
 }
 
 @keyframes appear {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {opacity:0;transform:translateY(18px)}
+  to {opacity:1;transform:translateY(0)}
 }
 
 .panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 25px 21px;
-  box-shadow: 0 20px 70px #0008;
-  position: relative;
-  overflow: hidden;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:25px 21px;
+  box-shadow:0 20px 70px #0008;
+  position:relative;
+  overflow:hidden;
 }
 
 .panel::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 12%;
-  width: 76%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  content:"";
+  position:absolute;
+  top:0;
+  left:12%;
+  width:76%;
+  height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
 }
 
 .header {
-  text-align: center;
-  margin-bottom: 25px;
+  text-align:center;
+  margin-bottom:25px;
 }
 
+/* LOGO REDONDA */
 .logo {
-  width: 75px;
-  height: 75px;
-  object-fit: contain;
-  margin-bottom: 12px;
-  filter: drop-shadow(0 0 16px #7e2b3e66);
+  width:82px;
+  height:82px;
+  object-fit:cover;
+  border-radius:50%;
+  padding:3px;
+  background:linear-gradient(135deg,#A54860,#5B1F2D);
+  border:2px solid #A54860;
+  box-shadow:
+    0 0 12px #7e2b3e66,
+    0 0 28px #7e2b3e33;
+  margin-bottom:13px;
 }
 
 .brand {
-  font-family: Orbitron, sans-serif;
-  font-size: 25px;
-  font-weight: 800;
-  letter-spacing: 3px;
+  font-family:Orbitron,sans-serif;
+  font-size:25px;
+  font-weight:800;
+  letter-spacing:3px;
 }
 
-.brand span {
-  color: #B65A70;
-}
+.brand span {color:#B65A70}
 
 .subtitle {
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 2px;
-  margin-top: 7px;
+  color:var(--muted);
+  font-size:11px;
+  letter-spacing:2px;
+  margin-top:7px;
 }
 
 .status {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 7px;
-  margin-top: 15px;
-  font-size: 10px;
-  color: var(--green);
-  letter-spacing: 1px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:7px;
+  margin-top:15px;
+  font-size:10px;
+  color:var(--green);
+  letter-spacing:1px;
 }
 
 .status-dot {
-  width: 7px;
-  height: 7px;
-  background: var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 9px var(--green);
+  width:7px;
+  height:7px;
+  background:var(--green);
+  border-radius:50%;
+  box-shadow:0 0 9px var(--green);
 }
 
 .section-title {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
-  letter-spacing: 1.5px;
-  margin-bottom: 12px;
-}
-
-.providers {
-  display: grid;
-  gap: 10px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--muted);
+  letter-spacing:1.5px;
+  margin-bottom:12px;
 }
 
 .provider {
-  width: 100%;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 13px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: .2s;
-  color: var(--text);
-  text-align: left;
-}
-
-.provider:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
-  background: #292027;
-}
-
-.provider.selected {
-  border-color: #A54860;
-  background: #7E2B3E22;
-  box-shadow: 0 0 15px #7e2b3e22;
+  width:100%;
+  background:var(--surface2);
+  border:1px solid #A54860;
+  border-radius:12px;
+  padding:13px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:var(--text);
+  text-align:left;
+  box-shadow:0 0 15px #7e2b3e22;
 }
 
 .provider img {
-  width: 35px;
-  height: 35px;
-  object-fit: contain;
-  border-radius: 8px;
+  width:35px;
+  height:35px;
+  object-fit:contain;
+  border-radius:8px;
 }
 
-.provider-info {
-  flex: 1;
-}
+.provider-info {flex:1}
 
 .provider-name {
-  font-size: 13px;
-  font-weight: 700;
+  font-size:13px;
+  font-weight:700;
 }
 
 .provider-desc {
-  color: var(--muted);
-  font-size: 10px;
-  margin-top: 4px;
+  color:var(--muted);
+  font-size:10px;
+  margin-top:4px;
 }
 
 .arrow {
-  color: var(--muted);
-  font-size: 19px;
+  color:var(--muted);
+  font-size:19px;
 }
 
 .primary {
-  width: 100%;
-  border: 0;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-  color: white;
-  font-weight: 800;
-  font-size: 12px;
-  letter-spacing: 1.5px;
-  padding: 15px;
-  margin-top: 18px;
-  cursor: pointer;
-  transition: .2s;
+  width:100%;
+  border:0;
+  border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  color:white;
+  font-weight:800;
+  font-size:12px;
+  letter-spacing:1.5px;
+  padding:15px;
+  margin-top:18px;
+  cursor:pointer;
+  transition:.2s;
 }
 
 .primary:hover {
-  filter: brightness(1.2);
-  transform: translateY(-1px);
-}
-
-.primary:disabled {
-  opacity: .4;
-  cursor: not-allowed;
-  transform: none;
+  filter:brightness(1.2);
+  transform:translateY(-1px);
 }
 
 .step {
-  display: none;
-  animation: appear .35s ease;
+  display:none;
+  animation:appear .35s ease;
 }
 
-.step.active {
-  display: block;
-}
+.step.active {display:block}
 
 .back {
-  background: transparent;
-  color: var(--muted);
-  border: 0;
-  font-size: 11px;
-  cursor: pointer;
-  margin-bottom: 18px;
+  background:transparent;
+  color:var(--muted);
+  border:0;
+  font-size:11px;
+  cursor:pointer;
+  margin-bottom:18px;
 }
 
 .info-box {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 15px;
-  margin-top: 15px;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.7;
-}
-
-.key-box {
-  background: #101014;
-  border: 1px dashed #A54860;
-  border-radius: 10px;
-  padding: 18px 10px;
-  text-align: center;
-  margin-top: 18px;
-}
-
-.key-label {
-  font-size: 9px;
-  color: var(--muted);
-  letter-spacing: 2px;
-  margin-bottom: 10px;
-}
-
-.key-value {
-  font-family: Orbitron, sans-serif;
-  font-size: 15px;
-  color: #D9899D;
-  overflow-wrap: anywhere;
-  letter-spacing: 1px;
-}
-
-.copy {
-  width: 100%;
-  padding: 13px;
-  margin-top: 12px;
-  background: var(--surface2);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.copy:hover {
-  border-color: var(--accent);
-}
-
-.timer {
-  color: var(--green);
-  font-size: 11px;
-  text-align: center;
-  margin-top: 15px;
-}
-
-.footer {
-  text-align: center;
-  margin-top: 22px;
-}
-
-.footer-line {
-  height: 1px;
-  background: var(--border);
-  margin-bottom: 17px;
-}
-
-.social-title {
-  color: var(--muted);
-  font-size: 9px;
-  letter-spacing: 2px;
-  margin-bottom: 12px;
-}
-
-.social-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 9px;
-  flex-wrap: wrap;
-}
-
-.social-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface);
-  color: var(--text);
-  text-decoration: none;
-  font-size: 10px;
-  font-weight: 600;
-  transition: .2s;
-}
-
-.social-button:hover {
-  background: #7E2B3E;
-  border-color: #A54860;
-  transform: translateY(-2px);
-}
-
-.social-button img {
-  width: 17px;
-  height: 17px;
-  object-fit: contain;
-}
-
-.discord-disabled {
-  opacity: .55;
-  cursor: default;
-}
-
-.copyright {
-  font-size: 9px;
-  color: #66636C;
-  margin-top: 16px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:15px;
+  margin-top:15px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.7;
 }
 
 .notice {
-  font-size: 9px;
-  color: #918F97;
-  text-align: center;
-  margin-top: 13px;
-  line-height: 1.6;
+  font-size:9px;
+  color:var(--muted);
+  text-align:center;
+  margin-top:13px;
+  line-height:1.6;
+}
+
+.footer {
+  text-align:center;
+  margin-top:22px;
+}
+
+.footer-line {
+  height:1px;
+  background:var(--border);
+  margin-bottom:17px;
+}
+
+.social-title {
+  color:var(--muted);
+  font-size:9px;
+  letter-spacing:2px;
+  margin-bottom:12px;
+}
+
+.social-links {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+}
+
+.social-button {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:9px 12px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface2);
+  color:var(--text);
+  text-decoration:none;
+  font-size:10px;
+  font-weight:600;
+  transition:.2s;
+}
+
+.social-button:hover {
+  background:#7E2B3E;
+  border-color:#A54860;
+  transform:translateY(-2px);
+}
+
+.social-button svg {
+  width:18px;
+  height:18px;
+  display:block;
+  fill:currentColor;
+}
+
+.discord-disabled {
+  opacity:.55;
+  cursor:default;
+}
+
+.copyright {
+  font-size:9px;
+  color:#66636C;
+  margin-top:16px;
 }
 
 @media(max-width:360px) {
-  .panel { padding: 22px 15px; }
-  .brand { font-size: 22px; }
-  .social-button { padding: 8px 9px; }
+  .panel {padding:22px 15px}
+  .brand {font-size:22px}
+  .social-button {padding:8px 9px}
 }
 </style>
 </head>
@@ -376,260 +306,190 @@ body {
 <body>
 
 <div class="container">
-  <main class="panel">
+<main class="panel">
 
-    <header class="header">
-      <img
-        class="logo"
-        src="https://i.ibb.co/Y7Z0PHVb/1795367917827.png"
-        alt="RD4X"
-      >
+<header class="header">
 
-      <div class="brand">RD4<span>X</span></div>
-      <div class="subtitle">KEY ACCESS SYSTEM</div>
+  <img
+    class="logo"
+    src="https://i.ibb.co/Y7Z0PHVb/1795367917827.png"
+    alt="RD4X"
+  >
 
-      <div class="status">
-        <span class="status-dot"></span>
-        SYSTEM ONLINE
+  <div class="brand">RD4<span>X</span></div>
+  <div class="subtitle">KEY ACCESS SYSTEM</div>
+
+  <div class="status">
+    <span class="status-dot"></span>
+    SYSTEM ONLINE
+  </div>
+
+</header>
+
+<!-- ETAPA 1 -->
+<section class="step active" id="step1">
+
+  <div class="section-title">
+    01 / SELECIONE SEU PROVEDOR
+  </div>
+
+  <div class="provider">
+
+    <img
+      src="https://i.ibb.co/1fsdjVSK/linkvertise.png"
+      alt="Linkvertise"
+    >
+
+    <div class="provider-info">
+      <div class="provider-name">Linkvertise</div>
+      <div class="provider-desc">
+        Acessar através do Linkvertise
       </div>
-    </header>
+    </div>
 
-    <!-- ETAPA 1 -->
-    <section class="step active" id="step1">
-      <div class="section-title">01 / SELECIONE SEU PROVEDOR</div>
+    <span class="arrow">✓</span>
 
-      <div class="providers">
+  </div>
 
-        <button class="provider" onclick="selectProvider('LootLabs', this)">
-          <img
-            src="https://i.ibb.co/mr0jHK22/images.jpg"
-            alt="LootLabs"
-          >
-          <div class="provider-info">
-            <div class="provider-name">LootLabs</div>
-            <div class="provider-desc">Acessar através do LootLabs</div>
-          </div>
-          <span class="arrow">›</span>
-        </button>
+  <button class="primary" onclick="showStep(2)">
+    CONTINUAR
+  </button>
 
-        <button class="provider" onclick="selectProvider('Linkvertise', this)">
-          <img
-            src="https://i.ibb.co/1fsdjVSK/linkvertise.png"
-            alt="Linkvertise"
-          >
-          <div class="provider-info">
-            <div class="provider-name">Linkvertise</div>
-            <div class="provider-desc">Acessar através do Linkvertise</div>
-          </div>
-          <span class="arrow">›</span>
-        </button>
+  <div class="info-box">
+    O Linkvertise é o provedor utilizado para iniciar
+    o processo de obtenção da sua key RD4X.
+  </div>
 
-      </div>
+</section>
 
-      <button class="primary" id="continueBtn" disabled onclick="goToStep2()">
-        CONTINUAR
-      </button>
+<!-- ETAPA 2 -->
+<section class="step" id="step2">
 
-      <div class="info-box">
-        Selecione um dos provedores acima para continuar com o processo de acesso
-      </div>
-    </section>
+  <button class="back" onclick="showStep(1)">
+    ← VOLTAR
+  </button>
 
-    <!-- ETAPA 2 -->
-    <section class="step" id="step2">
-      <button class="back" onclick="showStep(1)">← VOLTAR</button>
+  <div class="section-title">
+    02 / VERIFICAÇÃO
+  </div>
 
-      <div class="section-title">02 / VERIFICAÇÃO</div>
+  <div class="info-box" style="text-align:center">
 
-      <div class="info-box" style="text-align:center">
-        <div style="font-size:24px;margin-bottom:10px">🔐</div>
-        <strong style="color:#EBE9EC" id="providerSelected">Provedor</strong>
-        <p style="margin-top:8px">
-          Esta é uma demonstração visual do sistema RD4X
-        </p>
-      </div>
+    <div style="font-size:25px;margin-bottom:10px">
+      🔐
+    </div>
 
-      <button class="primary" onclick="generateKey()">
-        SIMULAR VERIFICAÇÃO
-      </button>
+    <strong style="color:#EBE9EC">
+      LINKVERTISE
+    </strong>
 
-      <div class="notice">
-        A verificação real do provedor ainda não está conectada
-      </div>
-    </section>
+    <p style="margin-top:8px">
+      Continue pelo Linkvertise para iniciar
+      o processo de verificação.
+    </p>
 
-    <!-- ETAPA 3 -->
-    <section class="step" id="step3">
-      <div class="section-title">03 / SUA KEY</div>
+  </div>
 
-      <div class="info-box" style="text-align:center">
-        <div style="font-size:23px;margin-bottom:8px">✓</div>
-        <strong style="color:#5BA677">KEY DEMONSTRATIVA GERADA</strong>
-        <p style="margin-top:7px">
-          Esta key foi criada localmente para testes
-        </p>
-      </div>
-
-      <div class="key-box">
-        <div class="key-label">YOUR ACCESS KEY</div>
-        <div class="key-value" id="generatedKey">RD4X-XXXX-XXXX</div>
-      </div>
-
-      <button class="copy" onclick="copyKey()">
-        COPIAR KEY
-      </button>
-
-      <div class="timer" id="timer">
-        KEY DEMONSTRATIVA
-      </div>
-
-      <button class="primary" onclick="resetSystem()">
-        GERAR OUTRA KEY
-      </button>
-    </section>
-
-    <!-- REDES SOCIAIS NO RODAPÉ -->
-    <footer class="footer">
-      <div class="footer-line"></div>
-
-      <div class="social-title">ACOMPANHE O RD4X</div>
-
-      <div class="social-links">
-
-        <a
-          href="https://www.tiktok.com/@nxz.xz7k"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="social-button"
-        >
-          <img
-            src="https://i.ibb.co/N2W5rct0/images-1.png"
-            alt="TikTok"
-          >
-          TikTok
-        </a>
-
-        <a
-          href="https://www.instagram.com/n.x.z.7?lqvp=MTBhMjA4dmMwNGI0dQ=="
-          target="_blank"
-          rel="noopener noreferrer"
-          class="social-button"
-        >
-          <img
-            src="https://i.ibb.co/CpJk2fVc/images-1.jpg"
-            alt="Instagram"
-          >
-          Instagram
-        </a>
-
-        <div class="social-button discord-disabled">
-          <img
-            src="https://i.ibb.co/PsN43k0r/images.png"
-            alt="Discord"
-          >
-          Discord
-        </div>
-
-      </div>
-
-      <div class="copyright">
-        RD4X SYSTEM © 2026 — ALL RIGHTS RESERVED
-      </div>
-    </footer>
-
-  </main>
+  <button class="primary" onclick="openLinkvertise()">
+    CONTINUAR PARA LINKVERTISE
+  </button>
 
   <div class="notice">
-    Este portal está em modo de demonstração
+    A confirmação automática da conclusão e a geração
+    de keys serão conectadas ao backend RD4X.
   </div>
+
+</section>
+
+<!-- RODAPÉ -->
+<footer class="footer">
+
+  <div class="footer-line"></div>
+
+  <div class="social-title">
+    ACOMPANHE O RD4X
+  </div>
+
+  <div class="social-links">
+
+    <!-- TIKTOK -->
+    <a
+      href="https://www.tiktok.com/@nxz.xz7k"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="social-button"
+    >
+      <svg viewBox="0 0 24 24" aria-label="TikTok">
+        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.33V2h-3.44v13.67a2.9 2.9 0 0 1-2.9 2.9 2.9 2.9 0 1 1 2.9-2.9c0-.2-.02-.4-.05-.59v-3.5a6.34 6.34 0 1 0 3.5 5.67V9.3a8.2 8.2 0 0 0 4.8 1.54V7.4a4.85 4.85 0 0 1-1.04-.71z"/>
+      </svg>
+      TikTok
+    </a>
+
+    <!-- INSTAGRAM -->
+    <a
+      href="https://www.instagram.com/n.x.z.7?lqvp=MTBhMjA4dmMwNGI0dQ=="
+      target="_blank"
+      rel="noopener noreferrer"
+      class="social-button"
+    >
+      <svg viewBox="0 0 24 24" aria-label="Instagram">
+        <path d="M7 2C4.24 2 2 4.24 2 7v10c0 2.76 2.24 5 5 5h10c2.76 0 5-2.24 5-5V7c0-2.76-2.24-5-5-5H7zm0 2h10c1.66 0 3 1.34 3 3v10c0 1.66-1.34 3-3 3H7c-1.66 0-3-1.34-3-3V7c0-1.66 1.34-3 3-3zm11.5 1.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
+      </svg>
+      Instagram
+    </a>
+
+    <!-- DISCORD -->
+    <div class="social-button discord-disabled">
+
+      <svg viewBox="0 0 24 24" aria-label="Discord">
+        <path d="M19.73 5.1A18.2 18.2 0 0 0 15.25 3.7l-.55 1.12a16.6 16.6 0 0 0-5.4 0L8.75 3.7A18.2 18.2 0 0 0 4.27 5.1C1.43 9.3.66 13.4 1.04 17.45a18.3 18.3 0 0 0 5.48 2.78l1.18-1.92c-.65-.24-1.27-.54-1.86-.89l.45-.35c3.58 1.67 7.46 1.67 11 0l.46.35c-.59.35-1.22.65-1.87.89l1.18 1.92a18.3 18.3 0 0 0 5.48-2.78c.45-4.7-.77-8.76-3.81-12.35zM8.8 14.7c-1.08 0-1.96-.99-1.96-2.2s.86-2.2 1.96-2.2 1.98.99 1.96 2.2c0 1.21-.86 2.2-1.96 2.2zm6.4 0c-1.08 0-1.96-.99-1.96-2.2s.86-2.2 1.96-2.2 1.98.99 1.96 2.2c0 1.21-.86 2.2-1.96 2.2z"/>
+      </svg>
+
+      Discord
+    </div>
+
+  </div>
+
+  <div class="copyright">
+    RD4X SYSTEM © 2026 — ALL RIGHTS RESERVED
+  </div>
+
+</footer>
+
+</main>
+
+<div class="notice">
+  RD4X KEY ACCESS SYSTEM
+</div>
+
 </div>
 
 <script>
-let selectedProvider = null;
 
-function selectProvider(provider, element) {
-  selectedProvider = provider;
-
-  document.querySelectorAll('.provider').forEach(button => {
-    button.classList.remove('selected');
-  });
-
-  element.classList.add('selected');
-  document.getElementById('continueBtn').disabled = false;
-}
+// COLE AQUI O LINK GERADO PELO LINKVERTISE
+const LINKVERTISE_URL = "SEU_LINK_LINKVERTISE_AQUI";
 
 function showStep(number) {
-  document.querySelectorAll('.step').forEach(step => {
-    step.classList.remove('active');
+  document.querySelectorAll(".step").forEach(step => {
+    step.classList.remove("active");
   });
 
-  document.getElementById('step' + number).classList.add('active');
+  document.getElementById("step" + number).classList.add("active");
 }
 
-function goToStep2() {
-  if (!selectedProvider) return;
+function openLinkvertise() {
 
-  document.getElementById('providerSelected').textContent =
-    selectedProvider;
-
-  showStep(2);
-}
-
-function generateKey() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-  function randomPart(length) {
-    const values = new Uint32Array(length);
-    crypto.getRandomValues(values);
-
-    return Array.from(values, value =>
-      chars[value % chars.length]
-    ).join('');
+  if (
+    !LINKVERTISE_URL ||
+    LINKVERTISE_URL === "SEU_LINK_LINKVERTISE_AQUI"
+  ) {
+    alert("O link do Linkvertise ainda não foi configurado.");
+    return;
   }
 
-  const key = 'RD4X-' +
-    randomPart(4) + '-' +
-    randomPart(4) + '-' +
-    randomPart(4);
-
-  document.getElementById('generatedKey').textContent = key;
-
-  showStep(3);
+  window.location.href = LINKVERTISE_URL;
 }
 
-async function copyKey() {
-  const key = document.getElementById('generatedKey').textContent;
-  const button = document.querySelector('.copy');
-
-  try {
-    await navigator.clipboard.writeText(key);
-    button.textContent = 'KEY COPIADA ✓';
-  } catch {
-    const input = document.createElement('textarea');
-    input.value = key;
-    document.body.appendChild(input);
-    input.select();
-    document.execCommand('copy');
-    input.remove();
-    button.textContent = 'KEY COPIADA ✓';
-  }
-
-  setTimeout(() => {
-    button.textContent = 'COPIAR KEY';
-  }, 1800);
-}
-
-function resetSystem() {
-  selectedProvider = null;
-
-  document.querySelectorAll('.provider').forEach(button => {
-    button.classList.remove('selected');
-  });
-
-  document.getElementById('continueBtn').disabled = true;
-
-  showStep(1);
-}
 </script>
 
 </body>
