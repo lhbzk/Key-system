@@ -392,8 +392,7 @@ body {
   </button>
 
   <div class="notice">
-    A confirmação automática da conclusão e a geração
-    de keys serão conectadas ao backend RD4X.
+    A conclusão será confirmada automaticamente pelo servidor RD4X.
   </div>
 
 </section>
@@ -406,7 +405,7 @@ body {
   </button>
 
   <div class="section-title">
-    03 / OBTER SUA KEY
+    03 / VERIFICAÇÃO
   </div>
 
   <div class="info-box" style="text-align:center">
@@ -417,29 +416,19 @@ body {
     </strong>
 
     <p style="margin-top:10px">
-      Você chegou à página final do RD4X.
+      Aguarde a confirmação do servidor RD4X.
     </p>
   </div>
 
   <div class="info-box">
     <strong style="color:#EBE9EC">
-      VERIFICAÇÃO EM CONFIGURAÇÃO
+      VERIFICAÇÃO
     </strong>
 
     <p style="margin-top:8px">
-      A confirmação da conclusão do Linkvertise e a geração
-      segura da sua key ainda estão sendo conectadas.
+      Sua conclusão será verificada antes de liberar
+      as próximas etapas.
     </p>
-  </div>
-
-  <button class="primary" type="button" disabled style="opacity:.5;cursor:not-allowed">
-    AGUARDANDO VERIFICAÇÃO
-  </button>
-
-  <div class="notice">
-    Acessar esta página não libera uma key.
-    O servidor RD4X precisará confirmar a conclusão
-    da tarefa antes de gerar sua key.
   </div>
 
 </section>
@@ -508,40 +497,6 @@ body {
 </div>
 
 <script>
-
-// LINK DO LINKVERTISE
-const LINKVERTISE_URL = "https://link-hub.net/7715611/gOGw6zIVVpSN";
-
-function showStep(number) {
-  document.querySelectorAll(".step").forEach(step => {
-    step.classList.remove("active");
-  });
-
-  const selectedStep = document.getElementById("step" + number);
-
-  if (selectedStep) {
-    selectedStep.classList.add("active");
-  }
-}
-
-// Abre a etapa final quando o Linkvertise retornar para ?view=key
-const params = new URLSearchParams(window.location.search);
-
-if (params.get("view") === "key") {
-  showStep(3);
-}
-
-function openLinkvertise() {
-  if (!LINKVERTISE_URL) {
-    alert("O link do Linkvertise ainda não foi configurado.");
-    return;
-  }
-
-  window.location.href = LINKVERTISE_URL;
-}
-
-  
-<script>
 // LINK DO LINKVERTISE
 const LINKVERTISE_URL = "https://link-hub.net/7715611/gOGw6zIVVpSN";
 
@@ -553,19 +508,14 @@ function showStep(number) {
     step.classList.remove("active");
   });
 
-  const selectedStep = document.getElementById("step" + number);
+  const selected = document.getElementById("step" + number);
 
-  if (selectedStep) {
-    selectedStep.classList.add("active");
+  if (selected) {
+    selected.classList.add("active");
   }
 }
 
 function openLinkvertise() {
-  if (!LINKVERTISE_URL) {
-    alert("O link do Linkvertise ainda não foi configurado.");
-    return;
-  }
-
   window.location.href = LINKVERTISE_URL;
 }
 
@@ -591,7 +541,7 @@ async function verifyLinkvertise(hash) {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ hash })
+        body: JSON.stringify({hash})
       }
     );
 
@@ -601,7 +551,6 @@ async function verifyLinkvertise(hash) {
       throw new Error(result.error || "VERIFICATION_FAILED");
     }
 
-    // Guarda a sessão temporariamente para a próxima etapa
     sessionStorage.setItem("rd4x_session", result.sessionId);
 
     section.innerHTML = `
@@ -609,21 +558,16 @@ async function verifyLinkvertise(hash) {
 
       <div class="info-box" style="text-align:center">
         <div style="font-size:30px;margin-bottom:10px">✓</div>
-
         <strong style="color:#5BA677">
           LINKVERTISE CONFIRMADO
         </strong>
-
         <p style="margin-top:10px">
           Sua conclusão foi confirmada pelo servidor RD4X.
         </p>
       </div>
 
       <div class="info-box">
-        <strong style="color:#EBE9EC">
-          PRÓXIMA ETAPA
-        </strong>
-
+        <strong style="color:#EBE9EC">PRÓXIMA ETAPA</strong>
         <p style="margin-top:8px">
           Agora será necessário concluir a verificação
           de participação no Discord.
@@ -648,11 +592,9 @@ async function verifyLinkvertise(hash) {
 
       <div class="info-box" style="text-align:center">
         <div style="font-size:28px;margin-bottom:10px">✕</div>
-
         <strong style="color:#D66A78">
           NÃO FOI POSSÍVEL CONFIRMAR
         </strong>
-
         <p style="margin-top:10px">
           O servidor não conseguiu validar sua conclusão
           no Linkvertise.
@@ -660,7 +602,6 @@ async function verifyLinkvertise(hash) {
       </div>
 
       <div class="notice">
-        Não tente reutilizar o mesmo link de verificação.
         Volte ao início e inicie um novo processo.
       </div>
 
@@ -671,7 +612,7 @@ async function verifyLinkvertise(hash) {
   }
 }
 
-// Verifica o retorno do Linkvertise
+// RETORNO DO LINKVERTISE
 const params = new URLSearchParams(window.location.search);
 
 if (params.get("view") === "key") {
@@ -679,7 +620,7 @@ if (params.get("view") === "key") {
 
   const hash = params.get("hash");
 
-  // Remove o hash da barra de endereço após capturá-lo
+  // Remove o hash da barra de endereço
   window.history.replaceState(
     {},
     document.title,
@@ -694,11 +635,9 @@ if (params.get("view") === "key") {
 
       <div class="info-box" style="text-align:center">
         <div style="font-size:28px;margin-bottom:10px">⚠️</div>
-
         <strong style="color:#D66A78">
           HASH NÃO ENCONTRADO
         </strong>
-
         <p style="margin-top:10px">
           Não foi recebido um comprovante válido do Linkvertise.
         </p>
@@ -711,3 +650,7 @@ if (params.get("view") === "key") {
   }
 }
 </script>
+
+</body>
+  </html>
+  
