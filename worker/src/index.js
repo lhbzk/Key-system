@@ -130,13 +130,19 @@ export default {
 
         const result = (await response.text()).trim();
 
-        if (result !== "TRUE") {
-          return json({
-            ok: false,
-            error: "LINKVERTISE_VERIFICATION_FAILED"
-          }, 403, request, env);
-        }
+        if (result === "Invalid token.") {
+  return json({
+    ok: false,
+    error: "INVALID_LINKVERTISE_TOKEN"
+  }, 403, request, env);
+}
 
+if (result !== "TRUE") {
+  return json({
+    ok: false,
+    error: "LINKVERTISE_HASH_NOT_FOUND_OR_EXPIRED"
+  }, 403, request, env);
+}
         const now = Math.floor(Date.now() / 1000);
         const expiresAt = now + 900;
         const sessionId = crypto.randomUUID();
