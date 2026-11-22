@@ -445,7 +445,7 @@ function start() {
     return;
   }
 
-  if (!/^[a-f0-9]{64}$/i.test(hash)) {
+  if (hash.length !== 64) {
     showError(
       "HASH INVÁLIDO",
       "O comprovante recebido não possui um formato válido."
