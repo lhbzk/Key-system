@@ -1,0 +1,636 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F0F12">
+<title>RD4X | Key System</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #0F0F12;
+  --surface: #18181D;
+  --surface2: #1F1F25;
+  --border: #302F36;
+  --text: #EBE9EC;
+  --muted: #918F97;
+  --accent: #7E2B3E;
+  --accent-dark: #5B1F2D;
+  --green: #5BA677;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 50% 0%, #7e2b3e22, transparent 55%),
+    var(--bg);
+  color: var(--text);
+  font-family: Inter, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 25px 15px;
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+  animation: appear .7s ease;
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 25px 21px;
+  box-shadow: 0 20px 70px #0008;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  width: 76%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.logo {
+  width: 75px;
+  height: 75px;
+  object-fit: contain;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 16px #7e2b3e66);
+}
+
+.brand {
+  font-family: Orbitron, sans-serif;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.brand span {
+  color: #B65A70;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-top: 7px;
+}
+
+.status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin-top: 15px;
+  font-size: 10px;
+  color: var(--green);
+  letter-spacing: 1px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 9px var(--green);
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+
+.providers {
+  display: grid;
+  gap: 10px;
+}
+
+.provider {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: .2s;
+  color: var(--text);
+  text-align: left;
+}
+
+.provider:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  background: #292027;
+}
+
+.provider.selected {
+  border-color: #A54860;
+  background: #7E2B3E22;
+  box-shadow: 0 0 15px #7e2b3e22;
+}
+
+.provider img {
+  width: 35px;
+  height: 35px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.provider-info {
+  flex: 1;
+}
+
+.provider-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.provider-desc {
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.arrow {
+  color: var(--muted);
+  font-size: 19px;
+}
+
+.primary {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  padding: 15px;
+  margin-top: 18px;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.primary:hover {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+
+.primary:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.step {
+  display: none;
+  animation: appear .35s ease;
+}
+
+.step.active {
+  display: block;
+}
+
+.back {
+  background: transparent;
+  color: var(--muted);
+  border: 0;
+  font-size: 11px;
+  cursor: pointer;
+  margin-bottom: 18px;
+}
+
+.info-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 15px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.key-box {
+  background: #101014;
+  border: 1px dashed #A54860;
+  border-radius: 10px;
+  padding: 18px 10px;
+  text-align: center;
+  margin-top: 18px;
+}
+
+.key-label {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.key-value {
+  font-family: Orbitron, sans-serif;
+  font-size: 15px;
+  color: #D9899D;
+  overflow-wrap: anywhere;
+  letter-spacing: 1px;
+}
+
+.copy {
+  width: 100%;
+  padding: 13px;
+  margin-top: 12px;
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copy:hover {
+  border-color: var(--accent);
+}
+
+.timer {
+  color: var(--green);
+  font-size: 11px;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 22px;
+}
+
+.footer-line {
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 17px;
+}
+
+.social-title {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.social-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.social-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 10px;
+  font-weight: 600;
+  transition: .2s;
+}
+
+.social-button:hover {
+  background: #7E2B3E;
+  border-color: #A54860;
+  transform: translateY(-2px);
+}
+
+.social-button img {
+  width: 17px;
+  height: 17px;
+  object-fit: contain;
+}
+
+.discord-disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.copyright {
+  font-size: 9px;
+  color: #66636C;
+  margin-top: 16px;
+}
+
+.notice {
+  font-size: 9px;
+  color: #918F97;
+  text-align: center;
+  margin-top: 13px;
+  line-height: 1.6;
+}
+
+@media(max-width:360px) {
+  .panel { padding: 22px 15px; }
+  .brand { font-size: 22px; }
+  .social-button { padding: 8px 9px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <main class="panel">
+
+    <header class="header">
+      <img
+        class="logo"
+        src="https://i.ibb.co/Y7Z0PHVb/1795367917827.png"
+        alt="RD4X"
+      >
+
+      <div class="brand">RD4<span>X</span></div>
+      <div class="subtitle">KEY ACCESS SYSTEM</div>
+
+      <div class="status">
+        <span class="status-dot"></span>
+        SYSTEM ONLINE
+      </div>
+    </header>
+
+    <!-- ETAPA 1 -->
+    <section class="step active" id="step1">
+      <div class="section-title">01 / SELECIONE SEU PROVEDOR</div>
+
+      <div class="providers">
+
+        <button class="provider" onclick="selectProvider('LootLabs', this)">
+          <img
+            src="https://i.ibb.co/mr0jHK22/images.jpg"
+            alt="LootLabs"
+          >
+          <div class="provider-info">
+            <div class="provider-name">LootLabs</div>
+            <div class="provider-desc">Acessar através do LootLabs</div>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+
+        <button class="provider" onclick="selectProvider('Linkvertise', this)">
+          <img
+            src="https://i.ibb.co/1fsdjVSK/linkvertise.png"
+            alt="Linkvertise"
+          >
+          <div class="provider-info">
+            <div class="provider-name">Linkvertise</div>
+            <div class="provider-desc">Acessar através do Linkvertise</div>
+          </div>
+          <span class="arrow">›</span>
+        </button>
+
+      </div>
+
+      <button class="primary" id="continueBtn" disabled onclick="goToStep2()">
+        CONTINUAR
+      </button>
+
+      <div class="info-box">
+        Selecione um dos provedores acima para continuar com o processo de acesso
+      </div>
+    </section>
+
+    <!-- ETAPA 2 -->
+    <section class="step" id="step2">
+      <button class="back" onclick="showStep(1)">← VOLTAR</button>
+
+      <div class="section-title">02 / VERIFICAÇÃO</div>
+
+      <div class="info-box" style="text-align:center">
+        <div style="font-size:24px;margin-bottom:10px">🔐</div>
+        <strong style="color:#EBE9EC" id="providerSelected">Provedor</strong>
+        <p style="margin-top:8px">
+          Esta é uma demonstração visual do sistema RD4X
+        </p>
+      </div>
+
+      <button class="primary" onclick="generateKey()">
+        SIMULAR VERIFICAÇÃO
+      </button>
+
+      <div class="notice">
+        A verificação real do provedor ainda não está conectada
+      </div>
+    </section>
+
+    <!-- ETAPA 3 -->
+    <section class="step" id="step3">
+      <div class="section-title">03 / SUA KEY</div>
+
+      <div class="info-box" style="text-align:center">
+        <div style="font-size:23px;margin-bottom:8px">✓</div>
+        <strong style="color:#5BA677">KEY DEMONSTRATIVA GERADA</strong>
+        <p style="margin-top:7px">
+          Esta key foi criada localmente para testes
+        </p>
+      </div>
+
+      <div class="key-box">
+        <div class="key-label">YOUR ACCESS KEY</div>
+        <div class="key-value" id="generatedKey">RD4X-XXXX-XXXX</div>
+      </div>
+
+      <button class="copy" onclick="copyKey()">
+        COPIAR KEY
+      </button>
+
+      <div class="timer" id="timer">
+        KEY DEMONSTRATIVA
+      </div>
+
+      <button class="primary" onclick="resetSystem()">
+        GERAR OUTRA KEY
+      </button>
+    </section>
+
+    <!-- REDES SOCIAIS NO RODAPÉ -->
+    <footer class="footer">
+      <div class="footer-line"></div>
+
+      <div class="social-title">ACOMPANHE O RD4X</div>
+
+      <div class="social-links">
+
+        <a
+          href="https://www.tiktok.com/@nxz.xz7k"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-button"
+        >
+          <img
+            src="https://i.ibb.co/N2W5rct0/images-1.png"
+            alt="TikTok"
+          >
+          TikTok
+        </a>
+
+        <a
+          href="https://www.instagram.com/n.x.z.7?lqvp=MTBhMjA4dmMwNGI0dQ=="
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-button"
+        >
+          <img
+            src="https://i.ibb.co/CpJk2fVc/images-1.jpg"
+            alt="Instagram"
+          >
+          Instagram
+        </a>
+
+        <div class="social-button discord-disabled">
+          <img
+            src="https://i.ibb.co/PsN43k0r/images.png"
+            alt="Discord"
+          >
+          Discord
+        </div>
+
+      </div>
+
+      <div class="copyright">
+        RD4X SYSTEM © 2026 — ALL RIGHTS RESERVED
+      </div>
+    </footer>
+
+  </main>
+
+  <div class="notice">
+    Este portal está em modo de demonstração
+  </div>
+</div>
+
+<script>
+let selectedProvider = null;
+
+function selectProvider(provider, element) {
+  selectedProvider = provider;
+
+  document.querySelectorAll('.provider').forEach(button => {
+    button.classList.remove('selected');
+  });
+
+  element.classList.add('selected');
+  document.getElementById('continueBtn').disabled = false;
+}
+
+function showStep(number) {
+  document.querySelectorAll('.step').forEach(step => {
+    step.classList.remove('active');
+  });
+
+  document.getElementById('step' + number).classList.add('active');
+}
+
+function goToStep2() {
+  if (!selectedProvider) return;
+
+  document.getElementById('providerSelected').textContent =
+    selectedProvider;
+
+  showStep(2);
+}
+
+function generateKey() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+  function randomPart(length) {
+    const values = new Uint32Array(length);
+    crypto.getRandomValues(values);
+
+    return Array.from(values, value =>
+      chars[value % chars.length]
+    ).join('');
+  }
+
+  const key = 'RD4X-' +
+    randomPart(4) + '-' +
+    randomPart(4) + '-' +
+    randomPart(4);
+
+  document.getElementById('generatedKey').textContent = key;
+
+  showStep(3);
+}
+
+async function copyKey() {
+  const key = document.getElementById('generatedKey').textContent;
+  const button = document.querySelector('.copy');
+
+  try {
+    await navigator.clipboard.writeText(key);
+    button.textContent = 'KEY COPIADA ✓';
+  } catch {
+    const input = document.createElement('textarea');
+    input.value = key;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+    button.textContent = 'KEY COPIADA ✓';
+  }
+
+  setTimeout(() => {
+    button.textContent = 'COPIAR KEY';
+  }, 1800);
+}
+
+function resetSystem() {
+  selectedProvider = null;
+
+  document.querySelectorAll('.provider').forEach(button => {
+    button.classList.remove('selected');
+  });
+
+  document.getElementById('continueBtn').disabled = true;
+
+  showStep(1);
+}
+</script>
+
+</body>
+</html>
