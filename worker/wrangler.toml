@@ -1,7 +1,8 @@
-
 name = "key-system"
 main = "src/index.js"
 compatibility_date = "2026-11-22"
 
-# O banco D1 será conectado posteriormente.
-# Nunca coloque tokens ou secrets neste arquivo.
+[[d1_databases]]
+binding = "DB"
+database_name = "rd4x-keys-db"
+database_id = "110da280-8cc5-4198-b162-21e111d948d9"
