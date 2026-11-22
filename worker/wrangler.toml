@@ -1,0 +1,7 @@
+
+name = "rd4x-key-api"
+main = "src/index.js"
+compatibility_date = "2026-11-22"
+
+# O banco D1 será conectado posteriormente.
+# Nunca coloque tokens ou secrets neste arquivo.
