@@ -89,11 +89,14 @@ export default {
         }, 503, request, env);
       }
 
-      if (!/^[a-f0-9]{64}$/i.test(env.LINKVERTISE_TOKEN)) {
-        return json({
-          ok: false,
-          error: "INVALID_LINKVERTISE_TOKEN_CONFIGURATION"
-        }, 503, request, env);
+      if (
+  typeof env.LINKVERTISE_TOKEN !== "string" ||
+  env.LINKVERTISE_TOKEN.length !== 64
+) {
+  return json({
+    ok: false,
+    error: "INVALID_LINKVERTISE_TOKEN_CONFIGURATION"
+  }, 503, request, env);
       }
 
       try {
