@@ -349,16 +349,16 @@ const notice = document.getElementById("notice");
 function showError(title, message) {
   resultBox.innerHTML = `
     <div class="icon">✕</div>
-    <div class="heading" style="color:#D66A78">
-      ${title}
-    </div>
-    <p class="description">${message}</p>
+    <div class="heading" style="color:#D66A78"></div>
+    <p class="description"></p>
   `;
+
+  resultBox.querySelector(".heading").textContent = title;
+  resultBox.querySelector(".description").textContent = message;
 
   notice.textContent =
     "Volte ao início para tentar novamente.";
 }
-
 function showSuccess(sessionId) {
   sessionStorage.setItem("rd4x_session", sessionId);
 
@@ -407,15 +407,15 @@ async function verifyLinkvertise(hash) {
 
     showSuccess(data.sessionId);
 
-  } catch (error) {
+    } catch (error) {
     console.error("RD4X:", error);
 
     showError(
       "VERIFICAÇÃO FALHOU",
-      "Não foi possível confirmar sua conclusão no Linkvertise. Tente iniciar um novo processo."
+      "Código recebido: " +
+      (error.message || "ERRO DESCONHECIDO")
     );
   }
-}
 
 function start() {
   const params = new URLSearchParams(window.location.search);
