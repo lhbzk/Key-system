@@ -48,7 +48,34 @@ function generateKey() {
   return `RD4X-${hex.match(/.{1,8}/g).join("-")}`;
 }
 
-// Comunicação com a API oficial do Linkvertise.
+// Gera uma key determinística para cada sessão.
+// IMPORTANTE: não altere o ADMIN_SECRET sem considerar
+// as sessões que ainda possam precisar recuperar sua key.
+async function generateSessionKey(sessionId, secret) {
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = new Uint8Array(
+    await crypto.subtle.sign(
+      "HMAC",
+      cryptoKey,
+      new TextEncoder().encode("RD4X-SESSION-KEY:" + sessionId)
+    )
+  );
+
+  const hex = Array.from(signature.slice(0, 16))
+    .map(byte => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .toUpperCase();
+
+  return "RD4X-" + hex.match(/.{1,8}/g).join("-");
+}
+
 async function callLinkvertise(token, hash) {
   const verifyUrl = new URL(
     "https://publisher.linkvertise.com/api/v1/anti_bypassing"
@@ -61,21 +88,13 @@ async function callLinkvertise(token, hash) {
     method: "POST"
   });
 
-  const text = (await response.text()).trim();
-
   return {
     status: response.status,
     contentType: response.headers.get("content-type") || "",
-    text
+    text: (await response.text()).trim()
   };
 }
 
-// Interpreta respostas antigas e novas do Linkvertise.
-// Formatos aceitos:
-// TRUE
-// FALSE
-// {"status":true}
-// {"status":false}
 function parseLinkvertiseResponse(text) {
   const value = text.trim();
 
@@ -98,19 +117,14 @@ function parseLinkvertiseResponse(text) {
   try {
     const data = JSON.parse(value);
 
-    if (
-      data &&
-      typeof data.status === "boolean"
-    ) {
+    if (data && typeof data.status === "boolean") {
       return {
         recognized: true,
         valid: data.status,
         format: "JSON"
       };
     }
-  } catch {
-    // Resposta não é JSON válido.
-  }
+  } catch {}
 
   if (/invalid.*token|token.*invalid|authentication token/i.test(value)) {
     return {
@@ -139,7 +153,7 @@ export default {
       });
     }
 
-    // Health check
+    // HEALTH CHECK
     if (
       url.pathname === "/api/health" &&
       request.method === "GET"
@@ -161,7 +175,7 @@ export default {
       }
     }
 
-    // Linkvertise Anti-Bypass
+    // LINKVERTISE VERIFICATION
     if (
       url.pathname === "/api/linkvertise/verify" &&
       request.method === "POST"
@@ -204,18 +218,10 @@ export default {
 
         const snippet = upstream.text.slice(0, 120);
 
-        // Não aceite respostas positivas com HTTP de erro.
         if (
           upstream.status < 200 ||
           upstream.status >= 300
         ) {
-          console.error(JSON.stringify({
-            event: "linkvertise_http_error",
-            upstreamStatus: upstream.status,
-            upstreamType: upstream.contentType,
-            upstreamBody: snippet
-          }));
-
           return json({
             ok: false,
             error: "LINKVERTISE_API_ERROR",
@@ -224,20 +230,15 @@ export default {
           }, 502, request, env);
         }
 
-        const result = parseLinkvertiseResponse(
-          upstream.text
-        );
+        const result = parseLinkvertiseResponse(upstream.text);
 
-        // Log seguro: nunca registra o hash completo.
         console.log(JSON.stringify({
           event: "linkvertise_verify",
           upstreamStatus: upstream.status,
           upstreamType: upstream.contentType,
-          upstreamBody: snippet,
           responseFormat: result.format,
           recognized: result.recognized,
-          hashLength: hash.length,
-          origin: request.headers.get("Origin")
+          hashLength: hash.length
         }));
 
         if (!result.recognized) {
@@ -252,9 +253,7 @@ export default {
         if (result.tokenError) {
           return json({
             ok: false,
-            error: "INVALID_LINKVERTISE_TOKEN",
-            upstreamStatus: upstream.status,
-            upstream: snippet
+            error: "INVALID_LINKVERTISE_TOKEN"
           }, 403, request, env);
         }
 
@@ -267,14 +266,11 @@ export default {
           }, 403, request, env);
         }
 
-        // Hash confirmado pelo Linkvertise.
         const now = Math.floor(Date.now() / 1000);
         const expiresAt = now + 900;
         const sessionId = crypto.randomUUID();
 
-        const fingerprint = await hashKey(
-          hash.toLowerCase()
-        );
+        const fingerprint = await hashKey(hash.toLowerCase());
 
         await env.DB.prepare(`
           INSERT INTO verification_sessions (
@@ -312,8 +308,7 @@ export default {
       }
     }
 
-    // Autoteste administrativo.
-    // Usa um hash fictício e não consome comprovantes reais.
+    // LINKVERTISE SELFTEST
     if (
       url.pathname === "/api/linkvertise/selftest" &&
       request.method === "POST"
@@ -327,13 +322,6 @@ export default {
           ok: false,
           error: "UNAUTHORIZED"
         }, 401, request, env);
-      }
-
-      if (!env.LINKVERTISE_TOKEN) {
-        return json({
-          ok: false,
-          error: "LINKVERTISE_TOKEN_NOT_CONFIGURED"
-        }, 503, request, env);
       }
 
       if (
@@ -366,26 +354,16 @@ export default {
           }, 502, request, env);
         }
 
-        const result = parseLinkvertiseResponse(
-          upstream.text
-        );
+        const result = parseLinkvertiseResponse(upstream.text);
 
         let interpretation;
 
         if (result.tokenError) {
           interpretation = "INVALID_LINKVERTISE_TOKEN";
-        } else if (
-          result.recognized &&
-          result.valid === false
-        ) {
-          interpretation =
-            "API_REACHABLE_HASH_REJECTED_TOKEN_NOT_CONFIRMED";
-        } else if (
-          result.recognized &&
-          result.valid === true
-        ) {
-          interpretation =
-            "UNEXPECTED_SYNTHETIC_HASH_ACCEPTED";
+        } else if (result.recognized && result.valid === false) {
+          interpretation = "API_REACHABLE_HASH_REJECTED_TOKEN_NOT_CONFIRMED";
+        } else if (result.recognized && result.valid === true) {
+          interpretation = "UNEXPECTED_SYNTHETIC_HASH_ACCEPTED";
         } else {
           interpretation = "UNKNOWN_UPSTREAM_RESPONSE";
         }
@@ -411,7 +389,180 @@ export default {
       }
     }
 
-    // Generate key - ADMIN ONLY
+    // GERAR KEY USANDO UMA SESSÃO VERIFICADA
+    if (
+      url.pathname === "/api/session/redeem" &&
+      request.method === "POST"
+    ) {
+      if (!env.ADMIN_SECRET) {
+        return json({
+          ok: false,
+          error: "KEY_SIGNING_SECRET_NOT_CONFIGURED"
+        }, 503, request, env);
+      }
+
+      try {
+        const body = await request.json();
+        const sessionId = body.sessionId;
+
+        if (
+          typeof sessionId !== "string" ||
+          !/^[0-9a-f-]{36}$/i.test(sessionId)
+        ) {
+          return json({
+            ok: false,
+            error: "INVALID_SESSION_ID"
+          }, 400, request, env);
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+
+        const session = await env.DB.prepare(`
+          SELECT
+            s.status,
+            s.expires_at,
+            s.key_id,
+            k.status AS key_status,
+            k.expires_at AS key_expires_at
+          FROM verification_sessions s
+          LEFT JOIN keys k ON k.id = s.key_id
+          WHERE s.id = ?
+          AND s.provider = 'linkvertise'
+        `).bind(sessionId).first();
+
+        if (!session) {
+          return json({
+            ok: false,
+            error: "SESSION_NOT_FOUND"
+          }, 404, request, env);
+        }
+
+        const key = await generateSessionKey(
+          sessionId,
+          env.ADMIN_SECRET
+        );
+
+        // Recupera a mesma key se a sessão já foi utilizada.
+        if (session.key_id) {
+          if (
+            session.key_id !== sessionId ||
+            session.key_status !== "active" ||
+            session.key_expires_at <= now
+          ) {
+            return json({
+              ok: false,
+              error: "SESSION_KEY_UNAVAILABLE"
+            }, 409, request, env);
+          }
+
+          return json({
+            ok: true,
+            key,
+            provider: "linkvertise",
+            expiresAt: session.key_expires_at
+          }, 200, request, env);
+        }
+
+        if (
+          session.status !== "completed" ||
+          session.expires_at <= now
+        ) {
+          return json({
+            ok: false,
+            error: "SESSION_EXPIRED_OR_NOT_VERIFIED"
+          }, 403, request, env);
+        }
+
+        const keyHash = await hashKey(key);
+        const expiresAt = now + 86400;
+
+        await env.DB.batch([
+          env.DB.prepare(`
+            INSERT OR IGNORE INTO keys (
+              id,
+              key_hash,
+              provider,
+              status,
+              created_at,
+              expires_at
+            )
+            SELECT ?, ?, 'linkvertise', 'active', ?, ?
+            WHERE EXISTS (
+              SELECT 1
+              FROM verification_sessions
+              WHERE id = ?
+              AND provider = 'linkvertise'
+              AND status = 'completed'
+              AND key_id IS NULL
+              AND expires_at > ?
+            )
+          `).bind(
+            sessionId,
+            keyHash,
+            now,
+            expiresAt,
+            sessionId,
+            now
+          ),
+
+          env.DB.prepare(`
+            UPDATE verification_sessions
+            SET key_id = ?
+            WHERE id = ?
+            AND provider = 'linkvertise'
+            AND status = 'completed'
+            AND key_id IS NULL
+            AND expires_at > ?
+            AND EXISTS (
+              SELECT 1 FROM keys WHERE id = ?
+            )
+          `).bind(
+            sessionId,
+            sessionId,
+            now,
+            sessionId
+          )
+        ]);
+
+        const completed = await env.DB.prepare(`
+          SELECT
+            s.key_id,
+            k.status AS key_status,
+            k.expires_at AS key_expires_at
+          FROM verification_sessions s
+          LEFT JOIN keys k ON k.id = s.key_id
+          WHERE s.id = ?
+        `).bind(sessionId).first();
+
+        if (
+          !completed ||
+          completed.key_id !== sessionId ||
+          completed.key_status !== "active"
+        ) {
+          return json({
+            ok: false,
+            error: "SESSION_ALREADY_USED_OR_EXPIRED"
+          }, 409, request, env);
+        }
+
+        return json({
+          ok: true,
+          key,
+          provider: "linkvertise",
+          expiresAt: completed.key_expires_at
+        }, 201, request, env);
+
+      } catch (error) {
+        console.error("Session key generation error:", error);
+
+        return json({
+          ok: false,
+          error: "SESSION_KEY_GENERATION_FAILED"
+        }, 500, request, env);
+      }
+    }
+
+    // GERAR KEY ADMINISTRATIVAMENTE
     if (
       url.pathname === "/api/generate" &&
       request.method === "POST"
@@ -423,10 +574,9 @@ export default {
         }, 503, request, env);
       }
 
-      const authorization = request.headers.get("Authorization");
-
       if (
-        authorization !== `Bearer ${env.ADMIN_SECRET}`
+        request.headers.get("Authorization") !==
+        `Bearer ${env.ADMIN_SECRET}`
       ) {
         return json({
           ok: false,
@@ -436,14 +586,9 @@ export default {
 
       try {
         const body = await request.json();
-
         const provider = body.provider;
-        const allowedProviders = [
-          "lootlabs",
-          "linkvertise"
-        ];
 
-        if (!allowedProviders.includes(provider)) {
+        if (!["lootlabs", "linkvertise"].includes(provider)) {
           return json({
             ok: false,
             error: "INVALID_PROVIDER"
@@ -498,15 +643,16 @@ export default {
         }, 201, request, env);
 
       } catch (error) {
+        console.error("Admin generation error:", error);
+
         return json({
           ok: false,
-          error: "GENERATION_FAILED",
-          message: error.message
+          error: "GENERATION_FAILED"
         }, 500, request, env);
       }
     }
 
-    // Verify key
+    // VERIFICAR KEY
     if (
       url.pathname === "/api/verify" &&
       request.method === "POST"
@@ -573,10 +719,11 @@ export default {
         }, 200, request, env);
 
       } catch (error) {
+        console.error("Key verification error:", error);
+
         return json({
           ok: false,
-          error: "VERIFICATION_FAILED",
-          message: error.message
+          error: "VERIFICATION_FAILED"
         }, 500, request, env);
       }
     }
@@ -587,4 +734,4 @@ export default {
     }, 404, request, env);
   }
 };
-          
+                      
