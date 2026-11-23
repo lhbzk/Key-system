@@ -185,6 +185,10 @@ body {
   cursor:not-allowed;
 }
 
+#generateButton[hidden] {
+  display:none;
+}
+
 .notice {
   font-size:9px;
   color:var(--muted);
@@ -292,6 +296,15 @@ body {
     </p>
   </div>
 
+  <button
+    class="primary"
+    id="generateButton"
+    type="button"
+    hidden
+  >
+    GERAR CHAVE
+  </button>
+
   <div class="notice" id="notice">
     Não feche esta página durante a verificação.
   </div>
@@ -357,8 +370,15 @@ const API_URL =
 
 const resultBox = document.getElementById("result");
 const notice = document.getElementById("notice");
+const generateButton = document.getElementById("generateButton");
+
+let receivedHash = null;
+let verifiedSessionId = null;
+let verificationInProgress = false;
 
 function showError(title, message) {
+  generateButton.hidden = true;
+
   resultBox.innerHTML = `
     <div class="icon">✕</div>
     <div class="heading" style="color:#D66A78"></div>
@@ -367,38 +387,43 @@ function showError(title, message) {
 
   resultBox.querySelector(".heading").textContent = title;
   resultBox.querySelector(".description").textContent = message;
-
-  notice.textContent =
-    "Volte ao início para tentar novamente.";
 }
 
-function showSuccess(sessionId) {
-  sessionStorage.setItem("rd4x_session", sessionId);
-
+function showVerified() {
   resultBox.innerHTML = `
     <div class="icon">✓</div>
-
     <div class="heading" style="color:#5BA677">
       LINKVERTISE CONFIRMADO
     </div>
-
     <p class="description">
-      Sua conclusão foi validada pelo servidor RD4X.
+      Seu acesso foi confirmado pelo servidor RD4X.
     </p>
   `;
 
   notice.textContent =
-    "Próxima etapa: verificação do Discord e geração da Key.";
+    "Verificação concluída. Clique abaixo para continuar.";
+
+  generateButton.hidden = false;
+  generateButton.disabled = false;
+  generateButton.textContent = "GERAR CHAVE";
 }
 
 async function verifyLinkvertise(hash) {
+  if (verificationInProgress) return;
+
+  verificationInProgress = true;
+  generateButton.hidden = true;
+
   resultBox.innerHTML = `
     <div class="icon">⏳</div>
     <div class="heading">VERIFICANDO LINKVERTISE</div>
     <p class="description">
-      Estamos confirmando sua conclusão com o servidor.
+      Estamos confirmando seu comprovante com o servidor.
     </p>
   `;
+
+  notice.textContent =
+    "Aguarde enquanto verificamos sua conclusão.";
 
   try {
     const response = await fetch(
@@ -412,13 +437,32 @@ async function verifyLinkvertise(hash) {
       }
     );
 
-    const data = await response.json();
+    let data;
 
-    if (!response.ok || !data.verified || !data.sessionId) {
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("INVALID_SERVER_RESPONSE");
+    }
+
+    if (
+      !response.ok ||
+      data.ok !== true ||
+      data.verified !== true ||
+      typeof data.sessionId !== "string" ||
+      data.sessionId.length < 10
+    ) {
       throw new Error(data.error || "VERIFICATION_FAILED");
     }
 
-    showSuccess(data.sessionId);
+    verifiedSessionId = data.sessionId;
+
+    sessionStorage.setItem(
+      "rd4x_session",
+      verifiedSessionId
+    );
+
+    showVerified();
 
   } catch (error) {
     console.error("RD4X:", error);
@@ -428,11 +472,19 @@ async function verifyLinkvertise(hash) {
       "Código recebido: " +
       (error.message || "ERRO DESCONHECIDO")
     );
+
+    notice.textContent =
+      "Volte ao início e tente novamente com um novo comprovante.";
+
+  } finally {
+    verificationInProgress = false;
   }
 }
 
 function start() {
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(
+    window.location.search
+  );
 
   if (params.get("view") !== "key") {
     showError(
@@ -442,16 +494,12 @@ function start() {
     return;
   }
 
-  const hash = params.get("hash");
+  receivedHash = params.get("hash");
 
-  // Remove o hash da barra de endereço após capturá-lo.
-  window.history.replaceState(
-    {},
-    document.title,
-    window.location.pathname + "?view=key"
-  );
-
-  if (typeof hash !== "string" || hash.length !== 64) {
+  if (
+    typeof receivedHash !== "string" ||
+    receivedHash.length !== 64
+  ) {
     showError(
       "HASH INVÁLIDO",
       "O comprovante recebido não possui exatamente 64 caracteres."
@@ -459,13 +507,54 @@ function start() {
     return;
   }
 
-  // ACEITA QUALQUER CARACTERE DESDE QUE TENHA 64 CARACTERES
-  verifyLinkvertise(hash);
+  // O hash NÃO é removido daqui.
+  // Ele permanece na URL até o clique no botão.
+
+  verifyLinkvertise(receivedHash);
 }
+
+generateButton.addEventListener("click", () => {
+  if (!verifiedSessionId) {
+    generateButton.hidden = true;
+
+    showError(
+      "SESSÃO INVÁLIDA",
+      "A verificação do servidor não foi concluída."
+    );
+
+    return;
+  }
+
+  // Remove o hash somente após o clique.
+  const url = new URL(window.location.href);
+
+  url.searchParams.delete("hash");
+
+  window.history.replaceState(
+    {},
+    document.title,
+    url.pathname + url.search + url.hash
+  );
+
+  generateButton.disabled = true;
+  generateButton.textContent = "VERIFICAÇÃO CONCLUÍDA";
+
+  resultBox.innerHTML = `
+    <div class="icon">✓</div>
+    <div class="heading" style="color:#5BA677">
+      ACESSO AUTORIZADO
+    </div>
+    <p class="description">
+      Sua verificação foi concluída com sucesso.
+    </p>
+  `;
+
+  notice.textContent =
+    "A sessão foi salva. A geração final da Key ainda precisa ser conectada ao servidor.";
+});
 
 start();
 </script>
 
 </body>
-  </html>
-  
+</html>
