@@ -487,11 +487,9 @@ async function verifyLinkvertise(hash) {
 function extractParams() {
   const raw = window.location.search + window.location.hash;
 
-  // Aceita ?view=key?hash=... e os formatos normais.
   const viewMatch = raw.match(/[?&]view=([^&#?]*)/);
   const view = viewMatch ? decodeURIComponent(viewMatch[1]) : null;
 
-  // Aceita ?hash=, &hash= ou #hash=
   const hashMatch = raw.match(/[?&#]hash=([^&#]*)/);
   let hash = null;
 
@@ -507,15 +505,19 @@ function extractParams() {
 }
 
 function describeArrival(raw, hash) {
-  // Não exibe o hash completo.
   const names = Array.from(
-    new Set((raw.match(/[?&#]([^=&#?]+)=/g) || []).map(x => x.slice(1, -1)))
+    new Set(
+      (raw.match(/[?&#]([^=&#?]+)=/g) || [])
+        .map(x => x.slice(1, -1))
+    )
   );
 
   let ref = "(vazio)";
 
   try {
-    ref = document.referrer ? new URL(document.referrer).host : "(vazio)";
+    ref = document.referrer
+      ? new URL(document.referrer).host
+      : "(vazio)";
   } catch {}
 
   return (
@@ -525,6 +527,121 @@ function describeArrival(raw, hash) {
   );
 }
 
+function showGeneratedKey(key, expiresAt) {
+  resultBox.innerHTML = `
+    <div class="icon">✓</div>
+    <div class="heading" style="color:#5BA677">
+      KEY GERADA COM SUCESSO
+    </div>
+    <p class="description">
+      Sua key RD4X está pronta.
+    </p>
+    <code id="generatedKey" style="
+      display:block;
+      margin-top:18px;
+      padding:14px;
+      background:#111116;
+      border:1px solid #5BA677;
+      border-radius:8px;
+      color:#fff;
+      word-break:break-all;
+      font-size:13px;
+    "></code>
+    <button id="copyKeyButton" class="primary" type="button">
+      COPIAR KEY
+    </button>
+    <p id="keyExpiry" class="description"></p>
+  `;
+
+  document.getElementById("generatedKey").textContent = key;
+
+  document.getElementById("keyExpiry").textContent =
+    "Expira em: " +
+    new Date(expiresAt * 1000).toLocaleString("pt-BR");
+
+  const copyButton =
+    document.getElementById("copyKeyButton");
+
+  copyButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(key);
+      copyButton.textContent = "KEY COPIADA!";
+    } catch {
+      copyButton.textContent = "COPIE A KEY MANUALMENTE";
+    }
+  });
+
+  generateButton.hidden = true;
+
+  notice.textContent =
+    "Guarde sua key RD4X em um local seguro.";
+}
+
+async function redeemSession() {
+  if (!verifiedSessionId) {
+    showError(
+      "SESSÃO INVÁLIDA",
+      "A verificação do servidor não foi concluída."
+    );
+    return;
+  }
+
+  generateButton.disabled = true;
+  generateButton.textContent = "GERANDO KEY...";
+
+  try {
+    const response = await fetch(
+      API_URL + "/api/session/redeem",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=UTF-8"
+        },
+        body: JSON.stringify({
+          sessionId: verifiedSessionId
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (
+      !response.ok ||
+      data.ok !== true ||
+      typeof data.key !== "string" ||
+      typeof data.expiresAt !== "number"
+    ) {
+      throw new Error(data.error || "GENERATION_FAILED");
+    }
+
+    // Remove o hash somente depois da geração confirmada.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("hash");
+
+    window.history.replaceState(
+      {},
+      document.title,
+      url.pathname + url.search + url.hash
+    );
+
+    showGeneratedKey(data.key, data.expiresAt);
+
+  } catch (error) {
+    console.error("RD4X generation:", error);
+
+    showError(
+      "ERRO AO GERAR KEY",
+      error.message || "Tente novamente."
+    );
+
+    generateButton.hidden = false;
+    generateButton.disabled = false;
+    generateButton.textContent = "TENTAR NOVAMENTE";
+  }
+}
+
+generateButton.addEventListener("click", redeemSession);
+
 function start() {
   const { view, hash, raw } = extractParams();
 
@@ -533,6 +650,19 @@ function start() {
       "ACESSO NÃO INICIADO",
       "Inicie o processo pela página principal do RD4X."
     );
+    return;
+  }
+
+  // Recupera uma sessão salva na mesma aba.
+  const savedSessionId =
+    sessionStorage.getItem("rd4x_session");
+
+  if (
+    savedSessionId &&
+    /^[0-9a-f-]{36}$/i.test(savedSessionId)
+  ) {
+    verifiedSessionId = savedSessionId;
+    showVerified();
     return;
   }
 
@@ -550,51 +680,8 @@ function start() {
     return;
   }
 
-  // O hash NÃO é removido daqui.
-  // Ele permanece na URL até o clique no botão.
-
   verifyLinkvertise(receivedHash);
 }
-
-generateButton.addEventListener("click", () => {
-  if (!verifiedSessionId) {
-    generateButton.hidden = true;
-
-    showError(
-      "SESSÃO INVÁLIDA",
-      "A verificação do servidor não foi concluída."
-    );
-
-    return;
-  }
-
-  // Remove o hash somente após o clique.
-  const url = new URL(window.location.href);
-
-  url.searchParams.delete("hash");
-
-  window.history.replaceState(
-    {},
-    document.title,
-    url.pathname + url.search + url.hash
-  );
-
-  generateButton.disabled = true;
-  generateButton.textContent = "VERIFICAÇÃO CONCLUÍDA";
-
-  resultBox.innerHTML = `
-    <div class="icon">✓</div>
-    <div class="heading" style="color:#5BA677">
-      ACESSO AUTORIZADO
-    </div>
-    <p class="description">
-      Sua verificação foi concluída com sucesso.
-    </p>
-  `;
-
-  notice.textContent =
-    "A sessão foi salva. A geração final da Key ainda precisa ser conectada ao servidor.";
-});
 
 start();
 </script>
