@@ -407,7 +407,7 @@ async function verifyLinkvertise(hash) {
 
     showSuccess(data.sessionId);
 
-    } catch (error) {
+  } catch (error) {
     console.error("RD4X:", error);
 
     showError(
@@ -416,6 +416,7 @@ async function verifyLinkvertise(hash) {
       (error.message || "ERRO DESCONHECIDO")
     );
   }
+}
 
 function start() {
   const params = new URLSearchParams(window.location.search);
