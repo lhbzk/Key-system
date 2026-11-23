@@ -627,7 +627,8 @@ if (params.get("view") === "key") {
     window.location.pathname + "?view=key"
   );
 
-  if (hash && /^[a-f0-9]{64}$/i.test(hash)) {
+  // ACEITA QUALQUER CARACTERE DESDE QUE TENHA 64 CARACTERES
+  if (typeof hash === "string" && hash.length === 64) {
     verifyLinkvertise(hash);
   } else {
     document.querySelector("#step3").innerHTML = `
@@ -652,5 +653,5 @@ if (params.get("view") === "key") {
 </script>
 
 </body>
-  </html>
+</html>
   
