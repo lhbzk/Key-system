@@ -452,7 +452,9 @@ async function verifyLinkvertise(hash) {
       typeof data.sessionId !== "string" ||
       data.sessionId.length < 10
     ) {
-      throw new Error(data.error || "VERIFICATION_FAILED");
+      const err = new Error(data.error || "VERIFICATION_FAILED");
+      err.upstream = data.upstream;
+      throw err;
     }
 
     verifiedSessionId = data.sessionId;
@@ -470,7 +472,8 @@ async function verifyLinkvertise(hash) {
     showError(
       "VERIFICAÇÃO FALHOU",
       "Código recebido: " +
-      (error.message || "ERRO DESCONHECIDO")
+      (error.message || "ERRO DESCONHECIDO") +
+      (error.upstream ? " | Linkvertise respondeu: " + error.upstream : "")
     );
 
     notice.textContent =
@@ -481,12 +484,51 @@ async function verifyLinkvertise(hash) {
   }
 }
 
-function start() {
-  const params = new URLSearchParams(
-    window.location.search
+function extractParams() {
+  const raw = window.location.search + window.location.hash;
+
+  // Aceita ?view=key?hash=... e os formatos normais.
+  const viewMatch = raw.match(/[?&]view=([^&#?]*)/);
+  const view = viewMatch ? decodeURIComponent(viewMatch[1]) : null;
+
+  // Aceita ?hash=, &hash= ou #hash=
+  const hashMatch = raw.match(/[?&#]hash=([^&#]*)/);
+  let hash = null;
+
+  if (hashMatch) {
+    try {
+      hash = decodeURIComponent(hashMatch[1]);
+    } catch {
+      hash = hashMatch[1];
+    }
+  }
+
+  return { view, hash, raw };
+}
+
+function describeArrival(raw, hash) {
+  // Não exibe o hash completo.
+  const names = Array.from(
+    new Set((raw.match(/[?&#]([^=&#?]+)=/g) || []).map(x => x.slice(1, -1)))
   );
 
-  if (params.get("view") !== "key") {
+  let ref = "(vazio)";
+
+  try {
+    ref = document.referrer ? new URL(document.referrer).host : "(vazio)";
+  } catch {}
+
+  return (
+    "Parâmetros recebidos: " + (names.join(", ") || "nenhum") +
+    " | tamanho do hash: " + (hash ? hash.length : "ausente") +
+    " | origem: " + ref
+  );
+}
+
+function start() {
+  const { view, hash, raw } = extractParams();
+
+  if (view !== "key") {
     showError(
       "ACESSO NÃO INICIADO",
       "Inicie o processo pela página principal do RD4X."
@@ -494,7 +536,7 @@ function start() {
     return;
   }
 
-  receivedHash = params.get("hash");
+  receivedHash = hash;
 
   if (
     typeof receivedHash !== "string" ||
@@ -502,7 +544,8 @@ function start() {
   ) {
     showError(
       "HASH INVÁLIDO",
-      "O comprovante recebido não possui exatamente 64 caracteres."
+      "O comprovante recebido não possui exatamente 64 caracteres. " +
+      describeArrival(raw, receivedHash)
     );
     return;
   }
