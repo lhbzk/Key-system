@@ -240,6 +240,11 @@ body {
   fill:currentColor;
 }
 
+.discord-disabled {
+  opacity:.55;
+  cursor:default;
+}
+
 .copyright {
   font-size:9px;
   color:#66636C;
@@ -325,6 +330,13 @@ body {
       Instagram
     </a>
 
+    <div class="social-button discord-disabled">
+      <svg viewBox="0 0 24 24" aria-label="Discord">
+        <path d="M19.73 5.1A18.2 18.2 0 0 0 15.25 3.7l-.55 1.12a16.6 16.6 0 0 0-5.4 0L8.75 3.7A18.2 18.2 0 0 0 4.27 5.1C1.43 9.3.66 13.4 1.04 17.45a18.3 18.3 0 0 0 5.48 2.78l1.18-1.92c-.65-.24-1.27-.54-1.86-.89l.45-.35c3.58 1.67 7.46 1.67 11 0l.46.35c-.59.35-1.22.65-1.87.89l1.18 1.92a18.3 18.3 0 0 0 5.48-2.78c.45-4.7-.77-8.76-3.81-12.35zM8.8 14.7c-1.08 0-1.96-.99-1.96-2.2s.86-2.2 1.96-2.2 1.98.99 1.96 2.2c0 1.21-.86 2.2-1.96 2.2zm6.4 0c-1.08 0-1.96-.99-1.96-2.2s.86-2.2 1.96-2.2 1.98.99 1.96 2.2c0 1.21-.86 2.2-1.96 2.2z"/>
+      </svg>
+      Discord
+    </div>
+
   </div>
 
   <div class="copyright">
@@ -359,6 +371,7 @@ function showError(title, message) {
   notice.textContent =
     "Volte ao início para tentar novamente.";
 }
+
 function showSuccess(sessionId) {
   sessionStorage.setItem("rd4x_session", sessionId);
 
@@ -393,8 +406,8 @@ async function verifyLinkvertise(hash) {
       {
         method: "POST",
         headers: {
-  "Content-Type": "text/plain;charset=UTF-8"
-},
+          "Content-Type": "text/plain;charset=UTF-8"
+        },
         body: JSON.stringify({ hash })
       }
     );
@@ -438,22 +451,15 @@ function start() {
     window.location.pathname + "?view=key"
   );
 
-  if (!hash) {
-    showError(
-      "HASH NÃO ENCONTRADO",
-      "O Linkvertise não enviou o comprovante de conclusão. Volte ao início e tente novamente."
-    );
-    return;
-  }
-
-  if (hash.length !== 64) {
+  if (typeof hash !== "string" || hash.length !== 64) {
     showError(
       "HASH INVÁLIDO",
-      "O comprovante recebido não possui um formato válido."
+      "O comprovante recebido não possui exatamente 64 caracteres."
     );
     return;
   }
 
+  // ACEITA QUALQUER CARACTERE DESDE QUE TENHA 64 CARACTERES
   verifyLinkvertise(hash);
 }
 
@@ -461,4 +467,5 @@ start();
 </script>
 
 </body>
-</html>
+  </html>
+  
