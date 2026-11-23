@@ -48,8 +48,7 @@ function generateKey() {
   return `RD4X-${hex.match(/.{1,8}/g).join("-")}`;
 }
 
-// Chama a API oficial de validação.
-// Nunca devolve nem registra o token.
+// Comunicação com a API oficial do Linkvertise.
 async function callLinkvertise(token, hash) {
   const verifyUrl = new URL(
     "https://publisher.linkvertise.com/api/v1/anti_bypassing"
@@ -68,6 +67,64 @@ async function callLinkvertise(token, hash) {
     status: response.status,
     contentType: response.headers.get("content-type") || "",
     text
+  };
+}
+
+// Interpreta respostas antigas e novas do Linkvertise.
+// Formatos aceitos:
+// TRUE
+// FALSE
+// {"status":true}
+// {"status":false}
+function parseLinkvertiseResponse(text) {
+  const value = text.trim();
+
+  if (value === "TRUE") {
+    return {
+      recognized: true,
+      valid: true,
+      format: "TEXT"
+    };
+  }
+
+  if (value === "FALSE") {
+    return {
+      recognized: true,
+      valid: false,
+      format: "TEXT"
+    };
+  }
+
+  try {
+    const data = JSON.parse(value);
+
+    if (
+      data &&
+      typeof data.status === "boolean"
+    ) {
+      return {
+        recognized: true,
+        valid: data.status,
+        format: "JSON"
+      };
+    }
+  } catch {
+    // Resposta não é JSON válido.
+  }
+
+  if (/invalid.*token|token.*invalid|authentication token/i.test(value)) {
+    return {
+      recognized: true,
+      valid: false,
+      tokenError: true,
+      format: "TEXT"
+    };
+  }
+
+  return {
+    recognized: false,
+    valid: false,
+    format: "UNKNOWN"
   };
 }
 
@@ -147,7 +204,7 @@ export default {
 
         const snippet = upstream.text.slice(0, 120);
 
-        // Não aceite TRUE quando a API respondeu com erro HTTP.
+        // Não aceite respostas positivas com HTTP de erro.
         if (
           upstream.status < 200 ||
           upstream.status >= 300
@@ -167,35 +224,50 @@ export default {
           }, 502, request, env);
         }
 
-        // Log seguro: sem token e sem hash completo.
+        const result = parseLinkvertiseResponse(
+          upstream.text
+        );
+
+        // Log seguro: nunca registra o hash completo.
         console.log(JSON.stringify({
           event: "linkvertise_verify",
           upstreamStatus: upstream.status,
           upstreamType: upstream.contentType,
           upstreamBody: snippet,
+          responseFormat: result.format,
+          recognized: result.recognized,
           hashLength: hash.length,
           origin: request.headers.get("Origin")
         }));
 
-        if (upstream.text !== "TRUE") {
-          let error;
-
-          if (upstream.text === "FALSE") {
-            error = "LINKVERTISE_HASH_NOT_FOUND_OR_EXPIRED";
-          } else if (/token/i.test(upstream.text)) {
-            error = "INVALID_LINKVERTISE_TOKEN";
-          } else {
-            error = "LINKVERTISE_UNEXPECTED_RESPONSE";
-          }
-
+        if (!result.recognized) {
           return json({
             ok: false,
-            error,
+            error: "LINKVERTISE_UNEXPECTED_RESPONSE",
+            upstreamStatus: upstream.status,
+            upstream: snippet
+          }, 502, request, env);
+        }
+
+        if (result.tokenError) {
+          return json({
+            ok: false,
+            error: "INVALID_LINKVERTISE_TOKEN",
             upstreamStatus: upstream.status,
             upstream: snippet
           }, 403, request, env);
         }
 
+        if (result.valid !== true) {
+          return json({
+            ok: false,
+            error: "LINKVERTISE_HASH_NOT_FOUND_OR_EXPIRED",
+            upstreamStatus: upstream.status,
+            upstream: snippet
+          }, 403, request, env);
+        }
+
+        // Hash confirmado pelo Linkvertise.
         const now = Math.floor(Date.now() / 1000);
         const expiresAt = now + 900;
         const sessionId = crypto.randomUUID();
@@ -230,7 +302,9 @@ export default {
           expiresAt
         }, 200, request, env);
 
-      } catch {
+      } catch (error) {
+        console.error("Linkvertise verification error:", error);
+
         return json({
           ok: false,
           error: "LINKVERTISE_VERIFICATION_ERROR"
@@ -238,9 +312,8 @@ export default {
       }
     }
 
-    // Autoteste do token SEM consumir hash real.
-    // Usa um hash sintético para testar token e conectividade.
-    // Esperado: upstream FALSE = token aceito pela API.
+    // Autoteste administrativo.
+    // Usa um hash fictício e não consome comprovantes reais.
     if (
       url.pathname === "/api/linkvertise/selftest" &&
       request.method === "POST"
@@ -256,32 +329,84 @@ export default {
         }, 401, request, env);
       }
 
+      if (!env.LINKVERTISE_TOKEN) {
+        return json({
+          ok: false,
+          error: "LINKVERTISE_TOKEN_NOT_CONFIGURED"
+        }, 503, request, env);
+      }
+
+      if (
+        typeof env.LINKVERTISE_TOKEN !== "string" ||
+        env.LINKVERTISE_TOKEN.length !== 64
+      ) {
+        return json({
+          ok: false,
+          error: "INVALID_LINKVERTISE_TOKEN_CONFIGURATION"
+        }, 503, request, env);
+      }
+
       try {
         const upstream = await callLinkvertise(
-          env.LINKVERTISE_TOKEN || "",
+          env.LINKVERTISE_TOKEN,
           "0".repeat(64)
         );
 
+        const snippet = upstream.text.slice(0, 120);
+
+        if (
+          upstream.status < 200 ||
+          upstream.status >= 300
+        ) {
+          return json({
+            ok: false,
+            error: "LINKVERTISE_API_ERROR",
+            upstreamStatus: upstream.status,
+            upstream: snippet
+          }, 502, request, env);
+        }
+
+        const result = parseLinkvertiseResponse(
+          upstream.text
+        );
+
+        let interpretation;
+
+        if (result.tokenError) {
+          interpretation = "INVALID_LINKVERTISE_TOKEN";
+        } else if (
+          result.recognized &&
+          result.valid === false
+        ) {
+          interpretation =
+            "API_REACHABLE_HASH_REJECTED_TOKEN_NOT_CONFIRMED";
+        } else if (
+          result.recognized &&
+          result.valid === true
+        ) {
+          interpretation =
+            "UNEXPECTED_SYNTHETIC_HASH_ACCEPTED";
+        } else {
+          interpretation = "UNKNOWN_UPSTREAM_RESPONSE";
+        }
+
         return json({
           ok: true,
-          tokenConfigured: Boolean(env.LINKVERTISE_TOKEN),
-          tokenLength: (env.LINKVERTISE_TOKEN || "").length,
+          tokenConfigured: true,
+          tokenLength: env.LINKVERTISE_TOKEN.length,
           upstreamStatus: upstream.status,
           upstreamType: upstream.contentType,
-          upstream: upstream.text.slice(0, 120),
-          interpretation:
-            upstream.text === "FALSE" &&
-            upstream.status >= 200 &&
-            upstream.status < 300
-              ? "TOKEN_OK_E_API_ALCANCAVEL"
-              : "VERIFIQUE_A_MENSAGEM_UPSTREAM"
+          upstream: snippet,
+          responseFormat: result.format,
+          interpretation
         }, 200, request, env);
 
       } catch (error) {
+        console.error("Linkvertise selftest error:", error);
+
         return json({
           ok: false,
-          error: "SELFTEST_FAILED",
-          message: error.message
+          error: "SELFTEST_FAILED"
         }, 500, request, env);
       }
     }
@@ -462,4 +587,4 @@ export default {
     }, 404, request, env);
   }
 };
-                    
+          
