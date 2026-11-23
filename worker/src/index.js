@@ -48,6 +48,29 @@ function generateKey() {
   return `RD4X-${hex.match(/.{1,8}/g).join("-")}`;
 }
 
+// Chama a API oficial de validação.
+// Nunca devolve nem registra o token.
+async function callLinkvertise(token, hash) {
+  const verifyUrl = new URL(
+    "https://publisher.linkvertise.com/api/v1/anti_bypassing"
+  );
+
+  verifyUrl.searchParams.set("token", token);
+  verifyUrl.searchParams.set("hash", hash);
+
+  const response = await fetch(verifyUrl.toString(), {
+    method: "POST"
+  });
+
+  const text = (await response.text()).trim();
+
+  return {
+    status: response.status,
+    contentType: response.headers.get("content-type") || "",
+    text
+  };
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -60,7 +83,10 @@ export default {
     }
 
     // Health check
-    if (url.pathname === "/api/health" && request.method === "GET") {
+    if (
+      url.pathname === "/api/health" &&
+      request.method === "GET"
+    ) {
       try {
         await env.DB.prepare("SELECT 1 AS ok").first();
 
@@ -69,6 +95,7 @@ export default {
           service: "rd4x-key-api",
           database: "connected"
         }, 200, request, env);
+
       } catch {
         return json({
           ok: false,
@@ -90,13 +117,13 @@ export default {
       }
 
       if (
-  typeof env.LINKVERTISE_TOKEN !== "string" ||
-  env.LINKVERTISE_TOKEN.length !== 64
-) {
-  return json({
-    ok: false,
-    error: "INVALID_LINKVERTISE_TOKEN_CONFIGURATION"
-  }, 503, request, env);
+        typeof env.LINKVERTISE_TOKEN !== "string" ||
+        env.LINKVERTISE_TOKEN.length !== 64
+      ) {
+        return json({
+          ok: false,
+          error: "INVALID_LINKVERTISE_TOKEN_CONFIGURATION"
+        }, 503, request, env);
       }
 
       try {
@@ -104,52 +131,78 @@ export default {
         const hash = body.hash;
 
         if (
-  typeof hash !== "string" ||
-  hash.length !== 64
-) {
+          typeof hash !== "string" ||
+          hash.length !== 64
+        ) {
           return json({
             ok: false,
             error: "INVALID_LINKVERTISE_HASH"
           }, 400, request, env);
         }
 
-        const verifyUrl = new URL(
-          "https://publisher.linkvertise.com/api/v1/anti_bypassing"
+        const upstream = await callLinkvertise(
+          env.LINKVERTISE_TOKEN,
+          hash
         );
 
-        verifyUrl.searchParams.set("token", env.LINKVERTISE_TOKEN);
-        verifyUrl.searchParams.set("hash", hash);
+        const snippet = upstream.text.slice(0, 120);
 
-        const response = await fetch(verifyUrl.toString(), {
-          method: "POST"
-        });
+        // Não aceite TRUE quando a API respondeu com erro HTTP.
+        if (
+          upstream.status < 200 ||
+          upstream.status >= 300
+        ) {
+          console.error(JSON.stringify({
+            event: "linkvertise_http_error",
+            upstreamStatus: upstream.status,
+            upstreamType: upstream.contentType,
+            upstreamBody: snippet
+          }));
 
-        if (!response.ok) {
           return json({
             ok: false,
-            error: "LINKVERTISE_API_ERROR"
+            error: "LINKVERTISE_API_ERROR",
+            upstreamStatus: upstream.status,
+            upstream: snippet
           }, 502, request, env);
         }
 
-        const result = (await response.text()).trim();
+        // Log seguro: sem token e sem hash completo.
+        console.log(JSON.stringify({
+          event: "linkvertise_verify",
+          upstreamStatus: upstream.status,
+          upstreamType: upstream.contentType,
+          upstreamBody: snippet,
+          hashLength: hash.length,
+          origin: request.headers.get("Origin")
+        }));
 
-        if (result === "Invalid token.") {
-  return json({
-    ok: false,
-    error: "INVALID_LINKVERTISE_TOKEN"
-  }, 403, request, env);
-}
+        if (upstream.text !== "TRUE") {
+          let error;
 
-if (result !== "TRUE") {
-  return json({
-    ok: false,
-    error: "LINKVERTISE_HASH_NOT_FOUND_OR_EXPIRED"
-  }, 403, request, env);
-}
+          if (upstream.text === "FALSE") {
+            error = "LINKVERTISE_HASH_NOT_FOUND_OR_EXPIRED";
+          } else if (/token/i.test(upstream.text)) {
+            error = "INVALID_LINKVERTISE_TOKEN";
+          } else {
+            error = "LINKVERTISE_UNEXPECTED_RESPONSE";
+          }
+
+          return json({
+            ok: false,
+            error,
+            upstreamStatus: upstream.status,
+            upstream: snippet
+          }, 403, request, env);
+        }
+
         const now = Math.floor(Date.now() / 1000);
         const expiresAt = now + 900;
         const sessionId = crypto.randomUUID();
-        const fingerprint = await hashKey(hash.toLowerCase());
+
+        const fingerprint = await hashKey(
+          hash.toLowerCase()
+        );
 
         await env.DB.prepare(`
           INSERT INTO verification_sessions (
@@ -185,8 +238,59 @@ if (result !== "TRUE") {
       }
     }
 
+    // Autoteste do token SEM consumir hash real.
+    // Usa um hash sintético para testar token e conectividade.
+    // Esperado: upstream FALSE = token aceito pela API.
+    if (
+      url.pathname === "/api/linkvertise/selftest" &&
+      request.method === "POST"
+    ) {
+      if (
+        !env.ADMIN_SECRET ||
+        request.headers.get("Authorization") !==
+          `Bearer ${env.ADMIN_SECRET}`
+      ) {
+        return json({
+          ok: false,
+          error: "UNAUTHORIZED"
+        }, 401, request, env);
+      }
+
+      try {
+        const upstream = await callLinkvertise(
+          env.LINKVERTISE_TOKEN || "",
+          "0".repeat(64)
+        );
+
+        return json({
+          ok: true,
+          tokenConfigured: Boolean(env.LINKVERTISE_TOKEN),
+          tokenLength: (env.LINKVERTISE_TOKEN || "").length,
+          upstreamStatus: upstream.status,
+          upstreamType: upstream.contentType,
+          upstream: upstream.text.slice(0, 120),
+          interpretation:
+            upstream.text === "FALSE" &&
+            upstream.status >= 200 &&
+            upstream.status < 300
+              ? "TOKEN_OK_E_API_ALCANCAVEL"
+              : "VERIFIQUE_A_MENSAGEM_UPSTREAM"
+        }, 200, request, env);
+
+      } catch (error) {
+        return json({
+          ok: false,
+          error: "SELFTEST_FAILED",
+          message: error.message
+        }, 500, request, env);
+      }
+    }
+
     // Generate key - ADMIN ONLY
-    if (url.pathname === "/api/generate" && request.method === "POST") {
+    if (
+      url.pathname === "/api/generate" &&
+      request.method === "POST"
+    ) {
       if (!env.ADMIN_SECRET) {
         return json({
           ok: false,
@@ -196,7 +300,9 @@ if (result !== "TRUE") {
 
       const authorization = request.headers.get("Authorization");
 
-      if (authorization !== `Bearer ${env.ADMIN_SECRET}`) {
+      if (
+        authorization !== `Bearer ${env.ADMIN_SECRET}`
+      ) {
         return json({
           ok: false,
           error: "UNAUTHORIZED"
@@ -207,7 +313,10 @@ if (result !== "TRUE") {
         const body = await request.json();
 
         const provider = body.provider;
-        const allowedProviders = ["lootlabs", "linkvertise"];
+        const allowedProviders = [
+          "lootlabs",
+          "linkvertise"
+        ];
 
         if (!allowedProviders.includes(provider)) {
           return json({
@@ -216,7 +325,9 @@ if (result !== "TRUE") {
           }, 400, request, env);
         }
 
-        const requestedTTL = Number(body.expiresInSeconds || 86400);
+        const requestedTTL = Number(
+          body.expiresInSeconds || 86400
+        );
 
         if (
           !Number.isInteger(requestedTTL) ||
@@ -271,7 +382,10 @@ if (result !== "TRUE") {
     }
 
     // Verify key
-    if (url.pathname === "/api/verify" && request.method === "POST") {
+    if (
+      url.pathname === "/api/verify" &&
+      request.method === "POST"
+    ) {
       try {
         const body = await request.json();
 
@@ -348,4 +462,4 @@ if (result !== "TRUE") {
     }, 404, request, env);
   }
 };
-            
+                    
